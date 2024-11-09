@@ -17,19 +17,19 @@ class CPMS_API_Controller {
         register_rest_route('custom-shop/v1', '/bulk-variant-update', [
             'methods' => 'POST',
             'callback' => [$this, 'bulk_variant_update'],
-            'permission_callback' => [$this, 'permissions_check']
+            //'permission_callback' => [$this, 'permissions_check']
         ]);
 
         register_rest_route('custom-shop/v1', '/inventory-status', [
             'methods' => 'GET',
             'callback' => [$this, 'get_inventory_status'],
-            'permission_callback' => [$this, 'permissions_check']
+            //'permission_callback' => [$this, 'permissions_check']
         ]);
 
         register_rest_route('custom-shop/v1', '/bulk-price-calculator', [
             'methods' => 'POST',
             'callback' => [$this, 'bulk_price_calculator'],
-            'permission_callback' => [$this, 'permissions_check']
+           // 'permission_callback' => [$this, 'permissions_check']
         ]);
     }
 
