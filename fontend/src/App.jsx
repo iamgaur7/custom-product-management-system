@@ -1,54 +1,118 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import ProductList from './Components/ProductList';
-import VariantEditor from './Components/VariantEditor';
+import React, { useState, useEffect } from 'react';
+import { api } from './services/api'; // Adjust the path if necessary
+import ProductVariant from './Components/ProductVariant';
+import BulkPricing from './Components/BulkPricing';
 import InventoryStatus from './Components/InventoryStatus';
-import PriceCalculator from './Components/PriceCalculator';
 
-const App = () => {
+function App() {
   const [products, setProducts] = useState([]);
-  const [inventoryStatus, setInventoryStatus] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [quantity, setQuantity] = useState(1);
 
-  // Fetch products from the API
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await axios.get('https://task.techwithnavi.com/wp-json/custom-shop/v1/products');
-        setProducts(response.data);
-      } catch (err) {
-        setError('Error fetching products.');
-      }
-    };
-
-    // Fetch inventory status from the API
-    const fetchInventoryStatus = async () => {
-      try {
-        const response = await axios.get('https://task.techwithnavi.com/wp-json/custom-shop/v1/inventory-status');
-        setInventoryStatus(response.data);
-      } catch (err) {
-        setError('Error fetching inventory status.');
-      }
-    };
-
     fetchProducts();
-    fetchInventoryStatus();
-    setLoading(false);
   }, []);
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
+  const fetchProducts = async () => {
+    try {
+      const response = await api.getProducts();
+      console.log('Raw API Response:', response); // Debug log to inspect the response
+
+      // Check if response.data exists and is an array
+      if (!response || !response.data || !Array.isArray(response.data)) {
+        throw new Error('Invalid response format');
+      }
+
+      const validProducts = response.data.filter((product) => {
+        return (
+          product &&
+          typeof product === 'object' &&
+          Array.isArray(product.variants)
+        );
+      });
+
+      console.log('Filtered Valid Products:', validProducts);
+
+      if (validProducts.length === 0) {
+        console.warn('No valid products found');
+      }
+
+      const productsWithVariants = validProducts.filter((product) => ({
+        id: product.product_id,
+        name: product.name || 'Unnamed Product',
+        variants: product.variants.map((variant) => ({
+          id: variant.variant_id || Math.random().toString(36).substr(2, 9),
+          sku: variant.sku || 'N/A',
+          stock: variant.stock || 0,
+          price: variant.price ? parseFloat(variant.price).toFixed(2) : '0.00',
+          attributes: variant.attributes || {},
+        })),
+      }));
+
+      console.log('Processed Products with Variants:', productsWithVariants);
+      setProducts(productsWithVariants);
+      setError(null);
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        'Failed to fetch products';
+      setError(`Error: ${errorMessage}`);
+      console.error('Error fetching products:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to handle stock updates in the parent component
+  const handleUpdateStock = (productId, variantId, newStock) => {
+    if (!productId || !variantId) return;
+
+    setProducts((prevProducts) =>
+      prevProducts.map((product) =>
+        product.id === productId
+          ? {
+            ...product,
+            variants: product.variants.map((variant) =>
+              variant.id === variantId
+                ? { ...variant, stock: newStock }
+                : variant
+            ),
+          }
+          : product
+      )
+    );
+  };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Product Management Dashboard</h1>
-      <InventoryStatus data={inventoryStatus} />
-      <ProductList products={products} />
-      <VariantEditor products={products} />
-      <PriceCalculator products={products} />
+    <div>
+      <h1 className="text-center my-5 text-2xl">Product Management</h1>
+      <div className="flex justify-around">
+        {error && <div>Error: {error}</div>}
+
+        {products.length === 0 && !error && <div>No products found</div>}
+
+        <div>
+          {products.map((product) => (
+            <ProductVariant
+              key={product.id}
+              product={product}
+              onUpdateStock={handleUpdateStock} // Passing the function to child
+            />
+          ))}
+        </div>
+        <div>
+          <InventoryStatus />
+          <BulkPricing />
+        </div>
+      </div>
     </div>
   );
-};
+}
 
 export default App;

@@ -1,44 +1,79 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const VariantEditor = ({ products }) => {
-  const [updatedVariants, setUpdatedVariants] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+const BulkVariantUpdate = () => {
+  const [variants, setVariants] = useState([]);
 
-  const handleBulkUpdate = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.post('https://task.techwithnavi.com/wp-json/custom-shop/v1/bulk-variant-update', {
-        variants: updatedVariants,
-      });
-      alert('Variants updated successfully!');
-    } catch (err) {
-      setError('Error updating variants.');
-    } finally {
-      setLoading(false);
-    }
+  // Fetch existing variants from WooCommerce (you may need an authenticated REST API call here)
+  useEffect(() => {
+    axios.get('https://task.techwithnavi.com/wp-json/custom-shop/v1/products', {
+     /* headers: {
+        Authorization: 'Bearer YOUR_ACCESS_TOKEN',
+      },*/
+    })
+    .then(response => {
+      setVariants(response.data);
+    })
+    .catch(error => {
+      console.error("There was an error fetching the variants!", error);
+    });
+  }, []);
+
+  const handleInputChange = (index, field, value) => {
+    const updatedVariants = [...variants];
+    updatedVariants[index][field] = value;
+    setVariants(updatedVariants);
+  };
+
+  const handleSubmit = () => {
+    axios.post('https://yourdomain.com/wp-json/custom/v1/bulk-update-variants', {
+      variants: variants.map(variant => ({
+        id: variant.id,
+        price: variant.price,
+        stock: variant.stock_quantity,
+      })),
+    }, {
+      headers: {
+        Authorization: 'Bearer YOUR_ACCESS_TOKEN',
+      },
+    })
+    .then(response => {
+      alert("Variants updated successfully!");
+    })
+    .catch(error => {
+      console.error("There was an error updating the variants!", error);
+    });
   };
 
   return (
-    <div className="mb-6">
-      <h2 className="text-2xl font-semibold mb-4">Bulk Variant Editor</h2>
-      <textarea
-        className="w-full p-4 border rounded-md"
-        rows="5"
-        placeholder="Enter variant data in JSON format"
-        onChange={(e) => setUpdatedVariants(e.target.value)}
-      />
-      <button
-        onClick={handleBulkUpdate}
-        className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg"
-        disabled={loading}
-      >
-        {loading ? 'Updating...' : 'Update Variants'}
-      </button>
-      {error && <p className="text-red-500 mt-2">{error}</p>}
+    <div>
+      <h2>Bulk Variant Update</h2>
+      <form onSubmit={e => { e.preventDefault(); handleSubmit(); }}>
+        {variants.map((variant, index) => (
+          <div key={variant.id}>
+            <h4>Variant {variant.id}</h4>
+            <label>
+              Price:
+              <input
+                type="number"
+                value={variant.price || ''}
+                onChange={(e) => handleInputChange(index, 'price', e.target.value)}
+              />
+            </label>
+            <label>
+              Stock:
+              <input
+                type="number"
+                value={variant.stock_quantity || ''}
+                onChange={(e) => handleInputChange(index, 'stock_quantity', e.target.value)}
+              />
+            </label>
+          </div>
+        ))}
+        <button type="submit">Update Variants</button>
+      </form>
     </div>
   );
 };
 
-export default VariantEditor;
+export default BulkVariantUpdate;
