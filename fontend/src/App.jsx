@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from './services/api'; // Adjust the path if necessary
 import ProductVariant from './Components/ProductVariant';
-import BulkPricing from './Components/BulkPricing';
 import InventoryStatus from './Components/InventoryStatus';
 
 function App() {
@@ -92,12 +91,12 @@ function App() {
   return (
     <div>
       <h1 className="text-center my-5 text-2xl">Product Management</h1>
-      <div className="flex justify-around">
+      <div className="flex px-5 gap-4 justify-between">
         {error && <div>Error: {error}</div>}
 
         {products.length === 0 && !error && <div>No products found</div>}
 
-        <div>
+        <div className='w-1/2 mb-5'>
           {products.map((product) => (
             <ProductVariant
               key={product.id}
@@ -106,9 +105,8 @@ function App() {
             />
           ))}
         </div>
-        <div>
+        <div className='w-1/2'>
           <InventoryStatus   />
-          <BulkPricing />
         </div>
       </div>
     </div>

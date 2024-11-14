@@ -30,6 +30,7 @@ class CPMS_API_Controller {
         ]);
     }
 
+
 public function get_products() {
     $args = [
         'status' => 'publish',
@@ -45,7 +46,7 @@ public function get_products() {
             'product_id' => $product->get_id(),
             'name' => $product->get_name(),
             'variants' => [],
-            'bulk_prices' => $this->get_bulk_prices($product) // Add bulk prices here
+            'bulk_prices' =>[] // Add bulk prices here
         ];
 
         if ($product->is_type('variable')) {
@@ -94,31 +95,39 @@ public function get_bulk_prices($product) {
     return $bulk_discounts;
 }
 
-    public function bulk_variant_update($request) {
-        $variants = $request->get_param('variants');
-        $updated_variants = [];
+   public function bulk_variant_update($request) {
+    $variants = $request->get_param('variants');
+    $updated_variants = [];
 
-        foreach ($variants as $variant_data) {
-            $variant_id = $variant_data['variant_id'];
-            $stock = $variant_data['stock'];
-            $price = $variant_data['price'];
+    foreach ($variants as $variant_data) {
+        $variant_id = $variant_data['variant_id'];
+        $stock = $variant_data['stock'];
+        $price = $variant_data['price'];
+        $variant = wc_get_product($variant_id);
 
-            $variant = wc_get_product($variant_id);
-            if ($variant && $variant->is_type('variation')) {
-                $variant->set_stock_quantity($stock);
-                $variant->set_price($price);
-                $variant->save();
+        if ($variant && $variant->is_type('variation')) {
+            // Update stock and price
+            $variant->set_stock_quantity($stock);
+            $variant->set_price($price);
+            $variant->save();
 
-                $updated_variants[] = [
-                    'variant_id' => $variant_id,
-                    'stock' => $stock,
-                    'price' => $price
-                ];
-            }
+            // Clear cache to ensure immediate update
+            wc_delete_product_transients($variant_id);
+
+            // Log success
+            $updated_variants[] = [
+                'variant_id' => $variant_id,
+                'stock' => $stock,
+                'price' => $price
+            ];
+        } else {
+            error_log("Variant update failed for ID: $variant_id - Product not found or is not a variation.");
         }
-
-        return new WP_REST_Response(['status' => 'success', 'updated_variants' => $updated_variants], 200);
     }
+
+    return new WP_REST_Response(['status' => 'success', 'updated_variants' => $updated_variants], 200);
+}
+
 
     public function get_inventory_status() {
         $products = wc_get_products(['status' => 'publish', 'limit' => -1]);
@@ -161,13 +170,13 @@ public function get_bulk_prices($product) {
 
     private function calculate_bulk_price($base_price, $quantity) {
         if ($quantity >= 100) {
-            return $base_price * 0.85;
+            return $base_price * 0.85*$quantity;
         } elseif ($quantity >= 50) {
-            return $base_price * 0.90;
+            return $base_price * 0.90*$quantity;
         } elseif ($quantity >= 20) {
-            return $base_price * 0.95;
+            return $base_price * 0.95*$quantity;
         }
-        return $base_price;
+        return $base_price*$quantity;
     }
 }
 

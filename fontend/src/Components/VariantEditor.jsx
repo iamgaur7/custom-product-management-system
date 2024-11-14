@@ -7,9 +7,6 @@ const BulkVariantUpdate = () => {
   // Fetch existing variants from WooCommerce (you may need an authenticated REST API call here)
   useEffect(() => {
     axios.get('https://task.techwithnavi.com/wp-json/custom-shop/v1/products', {
-     /* headers: {
-        Authorization: 'Bearer YOUR_ACCESS_TOKEN',
-      },*/
     })
     .then(response => {
       setVariants(response.data);
@@ -25,25 +22,6 @@ const BulkVariantUpdate = () => {
     setVariants(updatedVariants);
   };
 
-  const handleSubmit = () => {
-    axios.post('https://yourdomain.com/wp-json/custom/v1/bulk-update-variants', {
-      variants: variants.map(variant => ({
-        id: variant.id,
-        price: variant.price,
-        stock: variant.stock_quantity,
-      })),
-    }, {
-      headers: {
-        Authorization: 'Bearer YOUR_ACCESS_TOKEN',
-      },
-    })
-    .then(response => {
-      alert("Variants updated successfully!");
-    })
-    .catch(error => {
-      console.error("There was an error updating the variants!", error);
-    });
-  };
 
   return (
     <div>
