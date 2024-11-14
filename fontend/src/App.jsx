@@ -8,7 +8,7 @@ function App() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [quantity, setQuantity] = useState(1);
+  // const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
     fetchProducts();
@@ -73,13 +73,13 @@ function App() {
       prevProducts.map((product) =>
         product.id === productId
           ? {
-            ...product,
-            variants: product.variants.map((variant) =>
-              variant.id === variantId
-                ? { ...variant, stock: newStock }
-                : variant
-            ),
-          }
+              ...product,
+              variants: product.variants.map((variant) =>
+                variant.id === variantId
+                  ? { ...variant, stock: newStock }
+                  : variant
+              ),
+            }
           : product
       )
     );
@@ -107,7 +107,7 @@ function App() {
           ))}
         </div>
         <div>
-          <InventoryStatus />
+          <InventoryStatus   />
           <BulkPricing />
         </div>
       </div>

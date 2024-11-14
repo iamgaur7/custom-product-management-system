@@ -10,7 +10,6 @@ export default function BulkPricing({ products, quantity }) {
     setLoading(true);
     setError(null);
 
-    // Validate products and quantity before making the request
     if (!Array.isArray(products) || products.length === 0) {
       setError('Invalid products list.');
       setLoading(false);
@@ -30,9 +29,14 @@ export default function BulkPricing({ products, quantity }) {
         quantity,
       });
 
-      // Handle API response
-      if (response.data) {
-        setCalculatedPrice(response.data);
+      console.log('Bulk Price API Response:', response);
+
+      if (
+        response &&
+        response.unitPrice !== undefined &&
+        response.totalPrice !== undefined
+      ) {
+        setCalculatedPrice(response);
       } else {
         setError('No pricing data available.');
       }
@@ -50,34 +54,22 @@ export default function BulkPricing({ products, quantity }) {
     }
   }, [quantity, products]);
 
-  if (loading) {
-    return <div className="animate-pulse">Calculating...</div>;
-  }
-
-  if (error) {
-    return <div className="text-red-500">{error}</div>;
-  }
-
   return (
     <div className="mt-6 bg-gray-50 p-4 rounded-lg shadow-md">
       <h3 className="font-semibold mb-3">Bulk Pricing</h3>
-      {calculatedPrice ? (
+      {loading ? (
+        <div className="animate-pulse">Calculating...</div>
+      ) : error ? (
+        <div className="text-red-500">{error}</div>
+      ) : calculatedPrice ? (
         <div className="space-y-4">
           <div className="flex justify-between font-bold">
             <span>Price per unit ({quantity} units):</span>
-            <span>
-              {calculatedPrice.unitPrice !== undefined
-                ? calculatedPrice.unitPrice.toFixed(2)
-                : 'N/A'}
-            </span>
+            <span>${calculatedPrice.unitPrice.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-sm text-gray-600">
             <span>Total price:</span>
-            <span>
-              {calculatedPrice.totalPrice !== undefined
-                ? calculatedPrice.totalPrice.toFixed(2)
-                : 'N/A'}
-            </span>
+            <span>${calculatedPrice.totalPrice.toFixed(2)}</span>
           </div>
           {calculatedPrice.discount > 0 && (
             <div className="text-green-600 text-sm">
